@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "933598399173",
+    "project_id": "jokeswipe-bead7",
+    "storage_bucket": "jokeswipe-bead7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:933598399173:android:e7dde1a396d9a19a95feac",
+        "android_client_info": {
+          "package_name": "com.biggie.jokeswipe"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "933598399173-q0fhvlvjrdlfmgq4fiv5ehp7e71fqbti.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.biggie.jokeswipe",
+            "certificate_hash": "666fd83f92b319369b163eafbb2f85adee04f2e0"
+          }
+        },
+        {
+          "client_id": "933598399173-p6lg4sjsh0jlj0mpi7asjes5b2pr0nsc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC0_DFkE4lDZaEK7n9LO8xtmd6G02vXck8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "933598399173-p6lg4sjsh0jlj0mpi7asjes5b2pr0nsc.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
