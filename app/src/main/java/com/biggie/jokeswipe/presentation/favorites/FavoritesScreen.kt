@@ -7,8 +7,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -78,7 +78,7 @@ fun FavoritesScreen(
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { /* TODO: show detailed view */ },
+                                .clickable { /* could show detail if desired */ },
                             elevation = CardDefaults.cardElevation(4.dp)
                         ) {
                             Row(
@@ -98,20 +98,20 @@ fun FavoritesScreen(
                                         style = MaterialTheme.typography.bodyMedium
                                     )
                                 }
-                                IconButton(onClick = { viewModel.removeFromFavorites(joke) }) {
+                                IconButton(onClick = {
+                                    viewModel.removeFromFavorites(joke)
+                                }) {
                                     Icon(
                                         imageVector = Icons.Default.Delete,
                                         contentDescription = "Remove from favorites"
                                     )
                                 }
                                 IconButton(onClick = {
-                                    // Redirect to camera to share this joke
-                                    navController.navigate(Screen.Camera.route)
-                                }) {
-                                    Icon(
-                                        imageVector = Icons.Default.Share,
-                                        contentDescription = "Share joke"
+                                    navController.navigate(
+                                        Screen.Camera.cameraWithJoke("${joke.setup}\n${joke.punchline}")
                                     )
+                                }) {
+                                    Icon(Icons.Default.Share, contentDescription = "Share joke")
                                 }
                             }
                         }

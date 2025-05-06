@@ -19,8 +19,8 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.biggie.jokeswipe.R
 import com.biggie.jokeswipe.presentation.camera.ShareUtils
@@ -35,13 +35,11 @@ fun ShareScreen(
 ) {
     val context = LocalContext.current
 
-    // load the bitmap only once
+    // decode the bitmap once
     val bitmapState = produceState<Bitmap?>(null, imageUriString) {
         runCatching {
-            Uri.parse(imageUriString).let { uri ->
-                context.contentResolver.openInputStream(uri)
-                    ?.use { BitmapFactory.decodeStream(it) }
-            }
+            val uri = Uri.parse(imageUriString)
+            context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) }
         }.onSuccess { value = it }
     }
 
@@ -66,17 +64,21 @@ fun ShareScreen(
             )
         },
         bottomBar = {
-            BottomAppBar {
-                Spacer(Modifier.weight(1f))
+            // only download
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center
+            ) {
                 IconButton(onClick = {
                     bitmapState.value?.let { bmp ->
                         ShareUtils.saveImageToGallery(context, bmp, "joke_image")
                         Toast.makeText(context, "Saved to gallery", Toast.LENGTH_SHORT).show()
                     }
                 }) {
-                    Icon(painterResource(id = R.drawable.download), contentDescription = "Download")
+                    Icon(painterResource(R.drawable.download), contentDescription = "Download")
                 }
-                Spacer(Modifier.weight(1f))
             }
         }
     ) { innerPadding ->
@@ -86,32 +88,38 @@ fun ShareScreen(
                 .padding(innerPadding)
         ) {
             bitmapState.value?.let { bmp ->
+                // full‐screen image
                 Image(
-                    bitmap = bmp.asImageBitmap(),
+                    bitmap             = bmp.asImageBitmap(),
                     contentDescription = null,
-                    modifier = Modifier.fillMaxSize()
+                    modifier           = Modifier.fillMaxSize()
                 )
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        .background(Color(0xAA000000))
-                        .padding(vertical = 16.dp, horizontal = 24.dp)
-                ) {
-                    Text(
-                        text = jokeText,
-                        color = Color.White,
-                        fontSize = 20.sp,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                // **overlay** joke text on top of image
+                Text(
+                    text        = jokeText,
+                    color       = Color.White,
+                    textAlign   = TextAlign.Left,
+                    modifier    = Modifier
+                        .align(Alignment.Center)
+                        .background(Color(0x80000000))
+                        .padding(16.dp)
+                )
+            } ?: run {
+                // loading spinner
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
                 }
-            } ?: Box(
-                Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
             }
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ShareScreenPreview() {
+    ShareScreen(
+        navController     = NavController(LocalContext.current),
+        imageUriString    = "content://com.android.providers.media.documents/document/image%3A1234",
+        jokeText          = "This is a joke"
+    )
 }

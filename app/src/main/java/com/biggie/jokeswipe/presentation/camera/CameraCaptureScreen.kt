@@ -10,24 +10,17 @@ import android.os.Looper
 import android.view.Surface
 import android.view.ViewGroup
 import androidx.activity.compose.BackHandler
-import androidx.camera.core.ImageCapture
-import androidx.camera.core.ImageCaptureException
-import androidx.camera.core.Preview
+import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
@@ -44,13 +37,11 @@ import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
-import androidx.camera.core.CameraSelector
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CameraCaptureScreen(
     navController: NavController,
-    // receive the joke text under the name "jokeText"
     jokeText: String
 ) {
     val context = LocalContext.current
@@ -58,9 +49,10 @@ fun CameraCaptureScreen(
     val view = LocalView.current
 
     var previewUseCase by remember { mutableStateOf<Preview?>(null) }
-    var imageCapture by remember { mutableStateOf<ImageCapture?>(null) }
-    var capturedUri by remember { mutableStateOf<Uri?>(null) }
+    var imageCapture  by remember { mutableStateOf<ImageCapture?>(null) }
+    var capturedUri   by remember { mutableStateOf<Uri?>(null) }
 
+    // 1) Set up CameraX
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
     LaunchedEffect(cameraProviderFuture) {
         val cameraProvider = cameraProviderFuture.get()
@@ -70,8 +62,8 @@ fun CameraCaptureScreen(
             .setTargetRotation(rotation)
             .build()
 
+        cameraProvider.unbindAll()
         try {
-            cameraProvider.unbindAll()
             cameraProvider.bindToLifecycle(
                 lifecycleOwner,
                 CameraSelector.DEFAULT_BACK_CAMERA,
@@ -79,8 +71,9 @@ fun CameraCaptureScreen(
                 capture
             )
             previewUseCase = preview
-            imageCapture = capture
+            imageCapture  = capture
         } catch (e: Exception) {
+            // TODO: show user‐facing error
         }
     }
 
@@ -90,7 +83,7 @@ fun CameraCaptureScreen(
                 title = { Text("Capture") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.Close, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
@@ -100,26 +93,25 @@ fun CameraCaptureScreen(
                 Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
+                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                // Retake
+                // Retake (discard last capture)
                 IconButton(onClick = { capturedUri = null }) {
                     Icon(Icons.Default.Close, contentDescription = "Retake")
                 }
 
-                // Capture / Confirm
+                // Capture (or Confirm → Share)
                 IconButton(onClick = {
                     if (capturedUri == null) {
-                        // take picture
+                        // TAKE PHOTO
                         val photoFile = File(
                             context.cacheDir,
                             SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS", Locale.US)
-                                .format(Date()) + ".jpg"
+                                .format(System.currentTimeMillis()) + ".jpg"
                         )
-                        val outputOpts = ImageCapture.OutputFileOptions.Builder(photoFile).build()
+                        val opts = ImageCapture.OutputFileOptions.Builder(photoFile).build()
                         imageCapture?.takePicture(
-                            outputOpts,
+                            opts,
                             ContextCompat.getMainExecutor(context),
                             object : ImageCapture.OnImageSavedCallback {
                                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
@@ -127,17 +119,18 @@ fun CameraCaptureScreen(
                                         capturedUri = rotateAndSave(photoFile)
                                     }
                                 }
-                                override fun onError(exc: ImageCaptureException) {
-                                    // handle error
+                                override fun onError(exception: ImageCaptureException) {
+                                    // TODO: show error
                                 }
                             }
                         )
                     } else {
-                        // Already captured → navigate to Share, now using "jokeText"
+                        // CONFIRM → NAVIGATE TO SHARE, passing both URI & the original joke
                         navController.navigate(
-                            "${Screen.Share.route}" +
-                                    "?uri=${Uri.encode(capturedUri.toString())}" +
-                                    "&jokeText=${Uri.encode(jokeText)}"
+                            Screen.Share.shareWith(
+                                uri       = capturedUri.toString(),
+                                jokeText  = jokeText
+                            )
                         )
                     }
                 }) {
@@ -148,14 +141,15 @@ fun CameraCaptureScreen(
                     )
                 }
 
-                // Share (same deep‐link, enabled only after capture)
+                // Quick‐Share button (once you’ve captured)
                 IconButton(
                     onClick = {
                         capturedUri?.let { uri ->
                             navController.navigate(
-                                "${Screen.Share.route}" +
-                                        "?uri=${Uri.encode(uri.toString())}" +
-                                        "&jokeText=${Uri.encode(jokeText)}"
+                                Screen.Share.shareWith(
+                                    uri       = uri.toString(),
+                                    jokeText  = jokeText
+                                )
                             )
                         }
                     },
@@ -172,6 +166,7 @@ fun CameraCaptureScreen(
                 .padding(padding)
         ) {
             if (capturedUri == null) {
+                // LIVE CAMERA PREVIEW
                 AndroidView(
                     factory = { ctx ->
                         PreviewView(ctx).apply {
@@ -181,12 +176,13 @@ fun CameraCaptureScreen(
                             )
                         }
                     },
-                    update = { previewView ->
-                        previewUseCase?.setSurfaceProvider((previewView as PreviewView).surfaceProvider)
+                    update = { pv ->
+                        previewUseCase?.setSurfaceProvider((pv as PreviewView).surfaceProvider)
                     },
                     modifier = Modifier.fillMaxSize()
                 )
             } else {
+                // SHOW FINAL CAPTURED IMAGE
                 Image(
                     bitmap = BitmapFactory
                         .decodeStream(context.contentResolver.openInputStream(capturedUri!!))
@@ -198,11 +194,15 @@ fun CameraCaptureScreen(
         }
     }
 
+    // BACK pressed while viewing = go back to live preview
     BackHandler(enabled = (capturedUri != null)) {
         capturedUri = null
     }
 }
 
+/**
+ * Reads EXIF, rotates if needed, overwrites file, and returns its Uri
+ */
 private fun rotateAndSave(file: File): Uri {
     val exif = ExifInterface(file.absolutePath)
     val orientation = exif.getAttributeInt(
@@ -211,14 +211,15 @@ private fun rotateAndSave(file: File): Uri {
     )
     val matrix = Matrix().apply {
         when (orientation) {
-            ExifInterface.ORIENTATION_ROTATE_90  -> postRotate(90f)
+            ExifInterface.ORIENTATION_ROTATE_90  -> postRotate( 90f)
             ExifInterface.ORIENTATION_ROTATE_180 -> postRotate(180f)
             ExifInterface.ORIENTATION_ROTATE_270 -> postRotate(270f)
-            else                                -> return@apply
         }
     }
-    val bitmap = BitmapFactory.decodeFile(file.absolutePath)
-    val rotated = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+    val original = BitmapFactory.decodeFile(file.absolutePath)
+    val rotated  = Bitmap.createBitmap(
+        original, 0, 0, original.width, original.height, matrix, true
+    )
     FileOutputStream(file).use { out ->
         rotated.compress(Bitmap.CompressFormat.JPEG, 90, out)
     }

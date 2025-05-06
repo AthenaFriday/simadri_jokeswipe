@@ -1,23 +1,27 @@
 package com.biggie.jokeswipe.presentation.navigation
 
-import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavType
-import androidx.navigation.compose.*
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.biggie.jokeswipe.presentation.auth.SignInScreen
 import com.biggie.jokeswipe.presentation.auth.SignUpScreen
 import com.biggie.jokeswipe.presentation.camera.CameraCaptureScreen
-import com.biggie.jokeswipe.presentation.share.ShareScreen
 import com.biggie.jokeswipe.presentation.favorites.FavoritesScreen
 import com.biggie.jokeswipe.presentation.joke.JokeScreen
 import com.biggie.jokeswipe.presentation.settings.SettingsScreen
+import com.biggie.jokeswipe.presentation.share.ShareScreen
 import com.biggie.jokeswipe.presentation.splash.SplashScreen
 
 @Composable
 fun AppNavGraph() {
     val navController = rememberNavController()
-    NavHost(navController, startDestination = Screen.Splash.route) {
+    NavHost(
+        navController = navController,
+        startDestination = Screen.Splash.route
+    ) {
         composable(Screen.Splash.route) {
             SplashScreen(navController)
         }
@@ -36,11 +40,24 @@ fun AppNavGraph() {
         composable(Screen.Settings.route) {
             SettingsScreen(navController)
         }
-        // Camera (no args)
-        composable(Screen.Camera.route) {
-            CameraCaptureScreen(navController, "joketext")
+
+        // CAMERA — expects a `jokeText` query param
+        composable(
+            route = Screen.Camera.route + "?jokeText={jokeText}",
+            arguments = listOf(
+                navArgument("jokeText") {
+                    type = NavType.StringType
+                    nullable = false
+                }
+            )
+        ) { backStackEntry ->
+            val jokeText = backStackEntry
+                .arguments!!
+                .getString("jokeText")!!
+            CameraCaptureScreen(navController, jokeText)
         }
-        // Share — expects URI + joke text via query params
+
+        // SHARE — expects `uri` + `jokeText`
         composable(
             route = Screen.Share.route + "?uri={uri}&jokeText={jokeText}",
             arguments = listOf(
@@ -54,13 +71,13 @@ fun AppNavGraph() {
                 }
             )
         ) { backStackEntry ->
-            val uriString = backStackEntry.arguments!!.getString("uri")!!
-            val jokeText  = backStackEntry.arguments!!.getString("jokeText")!!
-            ShareScreen(
-                navController = navController,
-                imageUriString = uriString,
-                jokeText       = jokeText
-            )
+            val uriString = backStackEntry
+                .arguments!!
+                .getString("uri")!!
+            val jokeText = backStackEntry
+                .arguments!!
+                .getString("jokeText")!!
+            ShareScreen(navController, uriString, jokeText)
         }
     }
 }
