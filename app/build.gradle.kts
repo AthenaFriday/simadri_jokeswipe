@@ -19,6 +19,7 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables.useSupportLibrary = true
     }
 
     buildTypes {
@@ -34,6 +35,10 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+    }
+
+    configurations.all {
+        exclude(group = "com.android.support", module = "support-v4")
     }
 
     kotlinOptions {
@@ -101,6 +106,15 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation ("com.google.android.gms:play-services-auth:20.7.0")
     implementation ("com.google.firebase:firebase-auth-ktx:22.1.1")
-
+    implementation("com.android.support:appcompat-v7:23.2.0")
+    // core CameraX libraries
+    implementation("androidx.camera:camera-core:1.2.3")
+    implementation("androidx.camera:camera-camera2:1.2.3")
+    // lifecycle & view‑interop
+    implementation("androidx.camera:camera-lifecycle:1.2.3")
+    implementation("androidx.camera:camera-view:1.2.3")
+    // (optionally) CameraX extensions, if you need image analysis, video, etc.
+    implementation("androidx.camera:camera-extensions:1.2.3")
+    implementation ("io.coil-kt:coil-compose:2.4.0")
 
 }

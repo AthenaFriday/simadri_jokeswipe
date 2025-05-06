@@ -5,48 +5,39 @@ import androidx.lifecycle.viewModelScope
 import com.biggie.jokeswipe.domain.model.Joke
 import com.biggie.jokeswipe.domain.usecase.GetJokesUseCase
 import com.biggie.jokeswipe.domain.usecase.SaveJokeUseCase
+import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * ViewModel for JokeScreen, handling joke loading and saving favorites.
- */
 @HiltViewModel
 class JokeViewModel @Inject constructor(
     private val getJokesUseCase: GetJokesUseCase,
     private val saveJokeUseCase: SaveJokeUseCase
 ) : ViewModel() {
 
-    // Holds the current joke
     private val _joke = MutableStateFlow<Joke?>(null)
     val joke: StateFlow<Joke?> = _joke
 
-    // Loading indicator state
     private val _loading = MutableStateFlow(false)
     val loading: StateFlow<Boolean> = _loading
 
-    // Error message state
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
 
     init {
-        // Load a joke initially
         loadRandomJoke()
     }
 
-    /**
-     * Loads a random joke and updates loading/error states.
-     */
+    /** Fetch a random joke and update UI state */
     fun loadRandomJoke() {
         viewModelScope.launch {
             _loading.value = true
             _error.value = null
             try {
-                val result = getJokesUseCase.getRandomJoke()
-                _joke.value = result
+                _joke.value = getJokesUseCase()       // resolves now!
             } catch (e: Exception) {
                 _error.value = e.localizedMessage ?: "Failed to load joke"
             } finally {
@@ -56,15 +47,15 @@ class JokeViewModel @Inject constructor(
     }
 
     /**
-     * Saves the provided joke to favorites, then optionally loads a new one.
+     * Save the current joke to this user’s favorites,
+     * then load another.
      */
-    fun saveFavorite(joke: Joke) {
+    fun saveFavorite() {
+        val current = _joke.value ?: return
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
         viewModelScope.launch {
-            try {
-                saveJokeUseCase(joke)
-            } catch (e: Exception) {
-                // Optionally handle save error
-            }
+            saveJokeUseCase(uid, current)           // resolves now!
+            loadRandomJoke()
         }
     }
 }

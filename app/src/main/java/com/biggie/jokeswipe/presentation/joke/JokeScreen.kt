@@ -7,23 +7,25 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.biggie.jokeswipe.R
 import com.biggie.jokeswipe.presentation.auth.AuthViewModel
 import com.biggie.jokeswipe.presentation.navigation.Screen
 
 /**
- * Main joke display screen with logout, favorites, and settings icons in the top bar,
- * and skip/favorite actions below the joke card.
+ * Main Joke screen with logout, favorites, settings, and in-card actions.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,7 +38,7 @@ fun JokeScreen(
     val loading by viewModel.loading.collectAsState()
     val error by viewModel.error.collectAsState()
 
-    // Load a random joke when the screen is first composed
+    // Load a joke once on composition
     LaunchedEffect(Unit) {
         viewModel.loadRandomJoke()
     }
@@ -52,28 +54,19 @@ fun JokeScreen(
                             popUpTo(Screen.Joke.route) { inclusive = true }
                         }
                     }) {
-                        Icon(
-                            imageVector = Icons.Default.ExitToApp,
-                            contentDescription = "Logout"
-                        )
+                        Icon(Icons.Default.ExitToApp, contentDescription = "Logout")
                     }
                 },
                 actions = {
                     IconButton(onClick = {
                         navController.navigate(Screen.Favorites.route)
                     }) {
-                        Icon(
-                            imageVector = Icons.Default.Favorite,
-                            contentDescription = "Favorites"
-                        )
+                        Icon(Icons.Default.Favorite, contentDescription = "Favorites")
                     }
                     IconButton(onClick = {
                         navController.navigate(Screen.Settings.route)
                     }) {
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = "Settings"
-                        )
+                        Icon(Icons.Default.Settings, contentDescription = "Settings")
                     }
                 }
             )
@@ -115,20 +108,17 @@ fun JokeScreen(
             ) {
                 IconButton(onClick = { viewModel.loadRandomJoke() }) {
                     Icon(
-                        imageVector = Icons.Default.Clear,
+                        Icons.Default.Clear,
                         contentDescription = "Skip",
                         modifier = Modifier.size(36.dp)
                     )
                 }
 
                 IconButton(onClick = {
-                    joke?.let {
-                        viewModel.saveFavorite(it)
-                        viewModel.loadRandomJoke()
-                    }
+                    viewModel.saveFavorite()
                 }) {
                     Icon(
-                        imageVector = Icons.Default.Favorite,
+                        painterResource(id = R.drawable.ic_favorite),
                         contentDescription = "Favorite",
                         modifier = Modifier.size(36.dp)
                     )

@@ -2,18 +2,13 @@ package com.biggie.jokeswipe.domain.usecase
 
 import com.biggie.jokeswipe.domain.model.Joke
 import com.biggie.jokeswipe.domain.repository.JokeRepository
-import com.biggie.jokeswipe.domain.util.Resource
 import javax.inject.Inject
 
 class DeleteJokeUseCase @Inject constructor(
     private val repository: JokeRepository
 ) {
-    suspend operator fun invoke(joke: Joke): Resource<Unit> {
-        return try {
-            repository.removeFromFavorites(joke)
-            Resource.Success(Unit)
-        } catch (e: Exception) {
-            Resource.Error(e.localizedMessage ?: "Could not delete joke")
-        }
+
+    suspend operator fun invoke(userId: String, joke: Joke) {
+        repository.removeFromFavorites(userId, joke)
     }
 }

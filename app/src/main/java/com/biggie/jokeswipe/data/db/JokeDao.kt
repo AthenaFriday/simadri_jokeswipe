@@ -9,12 +9,13 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface JokeDao {
-    @Query("SELECT * FROM favorite_jokes")
-    fun getAllFavorites(): Flow<List<JokeEntity>>
+
+    @Query("SELECT * FROM favorite_jokes WHERE userId = :userId")
+    fun getFavoritesForUser(userId: String): Flow<List<JokeEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(joke: JokeEntity)
+    suspend fun insertFavorite(joke: JokeEntity)
 
     @Delete
-    suspend fun delete(joke: JokeEntity)
+    suspend fun deleteFavorite(joke: JokeEntity)
 }

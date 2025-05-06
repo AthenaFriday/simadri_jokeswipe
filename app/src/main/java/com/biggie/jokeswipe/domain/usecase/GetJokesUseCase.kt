@@ -4,10 +4,13 @@ import com.biggie.jokeswipe.domain.model.Joke
 import com.biggie.jokeswipe.domain.repository.JokeRepository
 import javax.inject.Inject
 
+/**
+ * Use case to fetch a random joke.
+ */
 class GetJokesUseCase @Inject constructor(
     private val repository: JokeRepository
 ) {
-    suspend fun getRandomJoke(): Joke = repository.getRandomJoke()
-    suspend fun getTenJokes(): List<Joke> = repository.getTenJokes()
-    suspend fun getJokeByType(type: String): Joke = repository.getJokeByType(type)
+    /** Delegate to repository */
+    suspend operator fun invoke(): Joke =
+        repository.getRandomJoke()
 }

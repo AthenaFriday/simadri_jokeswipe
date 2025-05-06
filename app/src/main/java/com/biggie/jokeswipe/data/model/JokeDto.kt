@@ -17,3 +17,5 @@ data class JokeDto(
         punchline = punchline
     )
 }
+
+fun List<JokeDto>.toJokeList(): List<Joke> = map { it.toJoke() }

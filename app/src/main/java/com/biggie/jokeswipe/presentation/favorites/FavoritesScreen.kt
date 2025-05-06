@@ -7,6 +7,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -21,6 +23,10 @@ import androidx.navigation.compose.rememberNavController
 import com.biggie.jokeswipe.domain.model.Joke
 import com.biggie.jokeswipe.presentation.navigation.Screen
 
+/**
+ * Favorites screen showing saved jokes as cards, with delete and share actions,
+ * plus navigation back to jokes and to settings.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavoritesScreen(
@@ -28,48 +34,52 @@ fun FavoritesScreen(
     viewModel: FavoritesViewModel = hiltViewModel()
 ) {
     val favorites by viewModel.favorites.collectAsState()
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Favorites") },
                 navigationIcon = {
                     IconButton(onClick = {
-                        // Navigate back to JokeScreen
                         navController.navigate(Screen.Joke.route) {
                             popUpTo(Screen.Joke.route) { inclusive = true }
                         }
                     }) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back to Jokes"
-                        )
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back to Jokes")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { navController.navigate(Screen.Settings.route) }) {
+                        Icon(Icons.Default.Settings, contentDescription = "Settings")
                     }
                 }
             )
-        },
-        content = { paddingValues ->
+        }
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
             if (favorites.isEmpty()) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
+                    modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("No favorites yet! Swipe jokes to add favorites.")
+                    Text("No favorites yet. Swipe to add some!")
                 }
             } else {
                 LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(favorites) { joke: Joke ->
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(8.dp)
-                                .clickable { /* TODO: show details */ },
-                            elevation = CardDefaults.elevatedCardElevation(4.dp)
+                                .clickable { /* TODO: show detailed view */ },
+                            elevation = CardDefaults.cardElevation(4.dp)
                         ) {
                             Row(
                                 modifier = Modifier
@@ -78,14 +88,29 @@ fun FavoritesScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text(joke.setup, style = MaterialTheme.typography.titleMedium)
+                                    Text(
+                                        text = joke.setup,
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
                                     Spacer(Modifier.height(4.dp))
-                                    Text(joke.punchline, style = MaterialTheme.typography.bodyMedium)
+                                    Text(
+                                        text = joke.punchline,
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
                                 }
                                 IconButton(onClick = { viewModel.removeFromFavorites(joke) }) {
                                     Icon(
                                         imageVector = Icons.Default.Delete,
-                                        contentDescription = "Remove"
+                                        contentDescription = "Remove from favorites"
+                                    )
+                                }
+                                IconButton(onClick = {
+                                    // Redirect to camera to share this joke
+                                    navController.navigate(Screen.Camera.route)
+                                }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Share,
+                                        contentDescription = "Share joke"
                                     )
                                 }
                             }
@@ -94,7 +119,7 @@ fun FavoritesScreen(
                 }
             }
         }
-    )
+    }
 }
 
 @Preview(showBackground = true)
